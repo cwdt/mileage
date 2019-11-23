@@ -7,18 +7,19 @@ export class AddressController {
     }
 
     public view = async (req: Request, res: Response): Promise<Response> => {
-        const coordinateOrError = Coordinate.create(
+        const coordinateResult = Coordinate.create(
             parseFloat(req.params.latitude.replace(',', '.')),
             parseFloat(req.params.longitude.replace(',', '.'))
         );
 
-        if (!coordinateOrError.success) {
-            return res.status(400).send(coordinateOrError.error());
+        if (!coordinateResult.success) {
+            return res.status(400).json({message: coordinateResult.error()});
         }
 
         try {
-            return res.json(await this.service.find(coordinateOrError.value()));
+            return res.status(200).header('Cache-Control', 'max-age=31536000').json(await this.service.find(coordinateResult.value()));
         } catch (err) {
+            console.log('Err while retrieving address:', err.message);
             return res.status(502).json({message: 'Error while retrieving address'});
         }
     };
